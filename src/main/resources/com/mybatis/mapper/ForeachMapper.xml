@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mybatis.mapper.ForeachMapper">
+    <select id="getEmployeesByIds" resultType="com.mybatis.bean.Employee">
+        select * from employee
+        <!--
+            collection 指定要遍历的集合, Collection (List、Set) 类型的参数会被 Mybatis 特殊处理封装到 map 中, List 类型的参数的 key 是 list, 也可以是 collection,
+            Collection 类型的参数对应的 key 为 collection, 如果是 Array 类型的参数，则其对应的 key 为 array
+
+            item: 将当前遍历出的元素赋值给指定的变量  #{变量名} 就能取出变量的值, 也就是当前遍历出的元素
+            index：索引。遍历 List 的时候, index 就是索引, item 就是当前的值；遍历 Map 的时候 index 表示的就是 map 的 key, item 就是 map 的值
+
+            separator：指定遍历出的每个元素之间的分隔符。 这个元素也不会错误地添加多余的分隔符。
+            open：遍历出所有结果后, 拼接一个开始的字符
+            close：遍历出所有结果后, 拼接一个结束的字符
+
+         -->
+        <foreach collection="list" item="id" open="where id in (" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+    <!-- 批量保存 -->
+    <insert id="addEmployees">
+        insert into employee(last_name, gender, email, dept_id) values
+        <foreach collection="list" item="emp" separator=",">
+            <!-- 表示遍历的每个元素的最终格式为 (lastName, gender, email, department.id) -->
+            (#{emp.lastName}, #{emp.gender}, #{emp.email}, #{emp.department.id})
+        </foreach>
+    </insert>
+
+    <!-- oracle 的第一种批量添加方式 -->
+    <insert id="addEmployees" databaseId="oracle">
+        <foreach collection="list" item="emp" open="begin" close="end;">
+            insert into employee(employee_id, last_name, email) values(employee_seq.nextVal, #{emp.lastName},
+            #{emp.email});
+        </foreach>
+    </insert>
+
+    <!-- 批量保存的第二种方式 -->
+    <insert id="addEmployeesSecondWay">
+        <foreach collection="list" item="emp" separator=";">
+            insert into employee(last_name, gender, email, dept_id) values (#{emp.lastName}, #{emp.gender},
+            #{emp.email}, #{emp.department.id})
+        </foreach>
+    </insert>
+
+    <!-- oracle 的第二种批量添加的方式 -->
+    <insert id="addEmployeesSecondWay" databaseId="oracle">
+        insert into employee(employee_id, last_name, email)
+        select employees_seq.nextVal, lastName, email from(
+        <foreach collection="list" item="emp" separator="union">
+            select #{emp.lastName} lastName, #{emp.email} email from dual
+        </foreach>
+        )
+    </insert>
+
+    <select id="getEmployeesTestInnerObject" resultType="com.mybatis.bean.Employee">
+        <if test="_databaseId == 'mysql'">
+            select * from employee
+<!--            <if test="_parameter != null">-->
+                <!-- 也可以写为 #{_parameter.lastName} 因为只传递了一个参数, 所以 _parameter 内置参数就是 这个参数 -->
+                where last_name like #{lastName}
+<!--            </if>-->
+        </if>
+        <if test="_databaseId == 'oracle'">
+            select * from employee_or
+        </if>
+    </select>
+
+    <select id="getEmployeesByBind" resultType="com.mybatis.bean.Employee">
+        <!-- bind：可以将 OGNL 表达式的值绑定到一个变量中, 方便后来引用这个变量的值, value 中的内容是 OGNL 表达式 -->
+        <bind name="_lastName" value="'%' + lastName + '%'"/>
+        select * from employee
+        <if test="_parameter != null">
+            <!-- where last_name like #{_parameter.lastName} -->
+            <!-- 可以直接使用 <bind> 标签绑定值之后的变量 -->
+            where last_name like #{_lastName}
+        </if>
+    </select>
+</mapper>

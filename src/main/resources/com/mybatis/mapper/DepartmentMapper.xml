@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mybatis.mapper.DepartmentMapper">
+
+    <!--
+        这里因为 Department 部门类中的属性名称 与 数据表 department 的列名不一样, 并且也没有驼峰命名的关系,
+        所以这里使用 <resultMap> 标签重新定义封装规则
+    -->
+    <resultMap id="Department" type="com.mybatis.bean.Department">
+        <!-- 将查询结果中的 department_id 列对应的值, 封装到 Department 对象的 id 属性中 -->
+        <id column="department_id" property="id"/>
+        <result column="deptname" property="name"/>
+    </resultMap>
+
+    <select id="getDepartmentById" resultMap="Department">
+        select * from department where department_id = #{id}
+    </select>
+</mapper>

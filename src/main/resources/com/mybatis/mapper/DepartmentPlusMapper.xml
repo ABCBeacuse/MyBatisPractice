@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mybatis.mapper.DepartmentPlusMapper">
+    <resultMap id="MyDept" type="com.mybatis.bean.DepartmentPlus">
+        <id column="department_id" property="id"/>
+        <result column="deptname" property="deptName"/>
+        <!-- <collection> 嵌套结果集的方式, 定义关联的集合元素类型的封装规则 -->
+        <!-- <collection> 定义 关联集合类型的属性 的封装规则, ofType 用来指定集合里面元素的类型 -->
+        <collection property="employees" ofType="com.mybatis.bean.Employee">
+            <id column="eid" property="id"/>
+            <result column="last_name" property="lastName"/>
+            <result column="gender" property="gender"/>
+            <result column="email" property="email"/>
+        </collection>
+    </resultMap>
+    <select id="getDepartmentPlusById" resultMap="MyDept">
+        SELECT dep.*, emp.id eid, emp.last_name, emp.gender, emp.email from department dep LEFT JOIN employee emp ON
+        dep.department_id = emp.dept_id WHERE dep.department_id = #{id}
+    </select>
+
+    <resultMap id="MyDeptStep" type="com.mybatis.bean.DepartmentPlus">
+        <id column="department_id" property="id"/>
+        <result column="deptname" property="deptName"/>
+        <!-- 关联对象 List<Employee> employees 列表信息使用 <collection> 标签结合 select 属性完成分步查询 -->
+        <!-- 表示 DepartmentPlus 对象中的关联属性 employees 由 com.mybatis.mapper.EmployeeMapper 空间下的 getEmployeesByDeptId 方法的返回值进行赋值
+        , 执行该方法时将这次查询的 department_id 列的值 传递给该方法-->
+        <!-- fetchType="eager" 部分关闭该 collection 标签的延迟加载 -->
+        <collection property="employees" select="com.mybatis.mapper.EmployeeMapper.getEmployeesByDeptId" column="department_id" />
+    </resultMap>
+
+    <!--
+        分步查询：
+            1.可以先根据传入的部门 id 信息, 从部门表 department 查询部门的除了 关联对象员工列表 的相关信息
+            2.再根据部门 id 查询员工表 employee, 来查出该部门下的相关员工的信息,
+    -->
+    <select id="getDepartmentPlusByIdStep" resultMap="MyDeptStep">
+        select * from department where department_id = #{id}
+    </select>
+</mapper>

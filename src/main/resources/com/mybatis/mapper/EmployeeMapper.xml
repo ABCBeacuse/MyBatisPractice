@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    namespace：使用接口的全类名, 则完成了与 interface 接口的动态绑定
+    id：唯一标识, 使用接口中某一个抽象方法名作为 id, 则完成了该 sql 标签与 interface 接口中该方法的动态绑定, 则该 sql 标签就作为了 接口中抽象方法 的实现类
+    resultType：返回值类型, 从数据库中查到信息后, 封装到哪个对象中
+    #{id}：从传递过来的参数中取出 id 值
+ -->
+<mapper namespace="com.mybatis.mapper.EmployeeMapper">
+    <!-- 别名不区分大小写 -->
+    <select id="getEmployeeById" resultType="EMP" databaseId="mysql" statementType="PREPARED">
+        select * from employee where id = #{id}
+    </select>
+
+    <select id="getEmployeesByDeptId" resultType="com.mybatis.bean.Employee">
+        select * from employee where dept_id = #{deptId}
+    </select>
+</mapper>

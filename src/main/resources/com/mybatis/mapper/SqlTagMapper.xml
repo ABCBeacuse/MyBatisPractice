@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mybatis.mapper.SqlTagMapper">
+    <select id="getEmployeeById" resultType="com.mybatis.bean.Employee" databaseId="mysql">
+        <!-- 引用外部定义的 sql -->
+        select
+            <include refid="employeeFields">
+                <!-- <property> 标签自定义属性 -->
+                <property name="testProperty" value="aaa"/>
+            </include>
+        from employee where id = #{id}
+    </select>
+
+    <!-- 抽取可重用的 sql 片段, 方便后面引用 -->
+    <sql id="employeeFields">
+        <!-- <sql> 标签中也可以使用方法 传递来的参数 和 两个内置参数 _parameter, _databaseId -->
+        <if test="_databaseId == 'mysql'">
+            <!-- 即在 mysql 环境下, employeeFields sql 块代表的是下方的字段 -->
+            id, last_name, gender, email, ${testProperty}
+        </if>
+        <if test="_databaseId == 'oracle'">
+            <!-- 即在 oracle 环境下, employeeFields sql 块代表的是下方的字段 -->
+        </if>
+    </sql>
+
+</mapper>

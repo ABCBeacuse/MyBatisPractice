@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mybatis.mapper.EmployeePlusMapper">
+
+    <!-- 自定义某个 JavaBean 的封装规则, 即配置 JavaBean 中每个属性 与 表中列 的对应关系 -->
+    <!--
+        type：自定义规则的 JavaBean 全类名, 或者 别名 (只要通过 Mybatis 起了别名, 则可以在 Mybatis 中的所有 sql 映射文件 xml 中任意位置使用),
+        但是推荐使用全类名, 更加清晰, 并且 IDEA 中可以直接跳入
+    -->
+    <!-- id：唯一 id, 方便引用定义好的 resultMap -->
+    <resultMap id="MyEmployee" type="com.mybatis.bean.Employee">
+        <!-- 指定主键列的封装规则, column 指定表中的哪一列为主键, property 指定该列对应的 JavaBean 的属性 -->
+        <!-- 使用<result />进行配置也可以, 但建议使用<id>配置主键, <id> 定义主键会有 Mybatis 底层对主键的优化 -->
+        <id column="id" property="id"/>
+        <!-- <result /> 标签定义普通列的封装规则, column 指定表中的哪一列, property 指定该列对应的 JavaBean 的属性 -->
+        <result column="last_name" property="lastName"/>
+        <!-- 其他不指定的列会自动封装, 需要数据表中的列名与 JavaBean 中的属性名一致, 或者都符合驼峰命名 并开启驼峰配置 -->
+        <!-- 但是建议我们只要写 resultMap 就把全部的映射规则都写上, 更加清晰, 且不需要做额外的配置 -->
+        <result column="email" property="email"/>
+        <result column="gender" property="gender"/>
+    </resultMap>
+
+    <select id="getEmployeeById" resultMap="MyEmployee">
+        select * from employee where id = #{id}
+    </select>
+
+    <resultMap id="MyEmployeePlus" type="com.mybatis.bean.EmployeePlus">
+        <id column="id" property="id"/>
+        <result column="last_name" property="lastName"/>
+        <result column="gender" property="gender"/>
+        <result column="email" property="email"/>
+        <!-- 使用级联属性 来 封装结果集 -->
+        <result column="dept_id" property="department.id"/>
+        <result column="deptname" property="department.name"/>
+    </resultMap>
+
+
+    <resultMap id="MyEmployeePlus2" type="com.mybatis.bean.EmployeePlus">
+        <id column="id" property="id"/>
+        <result column="last_name" property="lastName"/>
+        <result column="gender" property="gender"/>
+        <result column="email" property="email"/>
+        <!-- 使用 association 可以指定联合的 JavaBean 对象, property：指定哪个属性是联合的对象, javaType：指定这个属性对象的类型[不能省略], 为了中间内容的提示 -->
+        <association property="department" javaType="com.mybatis.bean.Department">
+            <id column="dept_id" property="id"/>
+            <result column="deptname" property="name"/>
+        </association>
+    </resultMap>
+
+    <select id="getEmployeePlusById" resultMap="MyEmployeePlus2">
+        select emp.*, dept.deptname from employee emp, department dept where emp.dept_id = dept.department_id and emp.id
+        = #{id}
+    </select>
+
+    <!-- 使用 <association> 标签分步查询 employee 雇员信息-->
+    <resultMap id="MyEmployeePlusStep" type="com.mybatis.bean.EmployeePlus">
+        <id column="id" property="id"/>
+        <result column="last_name" property="lastName"/>
+        <result column="gender" property="gender"/>
+        <result column="email" property="email"/>
+        <!-- 表示 EmployeePlus 类中 department 属性的值需要通过
+         com.mybatis.mapper.DepartmentMapper 命名空间下的 id 为 getDepartmentById 的 select 语句执行结果进行赋值, 方法传入的是这次查询结果中的 dept_id 字段的对应的值  -->
+        <association property="department" select="com.mybatis.mapper.DepartmentMapper.getDepartmentById" column="dept_id"/>
+    </resultMap>
+    <select id="getEmployeePlusByIdStep" resultMap="MyEmployeePlusStep">
+        select * from employee where id = #{id}
+    </select>
+
+
+    <!-- 使用带有鉴别器 discriminator 的雇员信息查询 -->
+    <resultMap id="MyEmpHasDis" type="com.mybatis.bean.EmployeePlus">
+        <!-- 给没有匹配到 case 之外的数据的封装规则，先这样理解，去掉这几行，没有匹配到 case 的数据也能正常封装 -->
+        <id column="id" property="id"/>
+        <result column="last_name" property="lastName"/>
+        <result column="gender" property="gender"/>
+        <result column="email" property="email"/>
+        <!-- 这里的 javaType 指的是 gender 列的值的类型, string 为 Mybatis 自带的别名 -->
+        <discriminator javaType="string" column="gender">
+            <!-- 0 表示女生, 而如果是女生则需要收集部门信息, 下方将重新定义封装规则（独立的封装规则，与上方 <id> 3个<result> 无关） -->
+            <case value="0" resultType="com.mybatis.bean.EmployeePlus">
+                <!-- 这里理解的是先使用 resultType 的自动映射封装, 然后在其基础上重新对 关联对象属性 department 进行赋值 -->
+                <association property="department" select="com.mybatis.mapper.DepartmentMapper.getDepartmentById" column="dept_id" />
+            </case>
+            <!-- 1 表示男生, 男生需要将 last_name 的值赋值给 email, 下方将重新定义封装规则（独立的封装规则，与上方 <id> 3个<result> 无关） -->
+            <case value="1" resultType="com.mybatis.bean.EmployeePlus">
+                <!-- 这里理解的是先使用 resultType 的自动映射封装, 然后在其基础上重新对 email 属性进行赋值 -->
+                <!-- 这个配置好像能自动覆盖掉 last_name 自动映射到 lastName 属性的功能, 需要额外写 <result column="last_name" property="lastName" /> 才可以对 lastName 属性赋值-->
+                <result column="last_name" property="email"/>
+            </case>
+        </discriminator>
+    </resultMap>
+    <select id="getEmployeePlusByIdStepDis" resultMap="MyEmpHasDis">
+        select * from employee where id = #{id}
+    </select>
+</mapper>

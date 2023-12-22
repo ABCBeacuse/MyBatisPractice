@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    namespace：使用接口的全类名, 则完成了与 interface 接口的动态绑定
+    id：唯一标识, 使用接口中某一个抽象方法名作为 id, 则完成了该 sql 标签与 interface 接口中该方法的动态绑定, 则该 sql 标签就作为了 接口中抽象方法 的实现类
+    resultType：返回值类型, 从数据库中查到信息后, 封装到哪个对象中
+    #{id}：从传递过来的参数中取出 id 值
+ -->
+<mapper namespace="com.mybatis.mapper.EmployeeAllMapper">
+    <!-- 别名不区分大小写 -->
+    <select id="getEmployeeById" resultType="emp">
+        select * from employee where id = #{id}
+    </select>
+
+    <select id="getEmployeeByIdAndLastName" resultType="emp">
+        select * from employee where id = ${id} and last_name = #{lastName}
+    </select>
+
+    <select id="getEmployeeByMap" resultType="emp">
+        select * from ${tableName} where id = #{id} and last_name = #{lastName}
+    </select>
+
+    <select id="getEmployeeByIds" resultType="emp">
+        select * from employee where id = #{list[0]}
+    </select>
+
+    <select id="getEmployeesByLike" resultType="emp">
+        select * from employee where last_name like #{match}
+    </select>
+    
+    <select id="getEmployeeMapById" resultType="map">
+        select * from employee where id = #{id}
+    </select>
+
+    <select id="getEmployeesMapByLike" resultType="emp">
+        select * from employee where last_name like #{match}
+    </select>
+
+    <!-- parameterType 可以省略, 内容可以是全类名, 也可以是起的别名; #{实参对象的属性名} 就可以取出传递来的实参对象的属性信息-->
+    <!-- sql 语句不写分号 ";" -->
+    <!-- mysql 支持自增主键, 自增主键的获取 需要开启 useGeneratedKeys="true", 同时需要指定 Mybatis 将自增主键的值封装给 JavaBean 的哪个属性 -->
+    <insert id="addEmployee" parameterType="emp" useGeneratedKeys="true" keyProperty="id">
+        insert into employee(last_name, gender, email) values (#{lastName}, #{gender}, #{email})
+    </insert>
+
+    <!-- Oracle 没有自增的主键; Oracle 使用序列来模拟自增 -->
+    <!-- 每次插入数据的主键, 都是从序列中先取出, 如何拿到这个值-->
+    <!-- 可以省略参数类型 -->
+    <insert id="addEmployee" databaseId="oracle">
+        <!-- keyProperty: 查出的主键值封装给 JavaBean 的哪个属性 -->
+        <!-- order="BEFORE": 当前 SQL 在 插入 SQL 之前执行; order="AFTER": 当前 SQL 在 插入 SQL 之后执行-->
+        <!-- resultType: 查出的数据的返回值类型 -->
+        <selectKey keyProperty="id" order="BEFORE" resultType="Integer">
+            <!-- 编写获取主键的 SQL 语句 -->
+            select EMPLOYEES_SEQ.nextval from dual
+        </selectKey>
+        <!-- 插入的主键是从序列中先拿出来的 -->
+        insert into employees values(EMPLOYEE_ID, LAST_NAME, EMAIL) values (#{id}, #{lastName}, #{email})
+    </insert>
+
+    <!-- 省略了 parameterType -->
+    <update id="updateEmployee">
+        update employee set last_name = #{lastName}, gender = #{gender}, email = #{email} where id = #{id}
+    </update>
+
+    <delete id="deleteEmployeeById">
+        delete from employee where id = #{id}
+    </delete>
+</mapper>

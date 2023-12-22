@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+<generatorConfiguration>
+    <!-- 使用这种方式导入 jar 包, 我们不需要使用这种方式, 因为 jar 包已经被 Maven 引入 -->
+    <!-- <classPathEntry location="/Program Files/IBM/SQLLIB/java/db2java.zip" /> -->
+
+    <!-- 指定 Mybatis Generator 代码生成器的运行环境 The <context> element is used to specify the environment for generating a set of objects -->
+    <!-- id：A unique identifier for this context. This value will be used in some error messages. -->
+    <!-- targetRuntime：This property is used to specify the runtime target for generated code. ：MyBatis3Simple 生成简单版的 CRUD -->
+    <context id="DB2Tables" targetRuntime="MyBatis3Simple">
+        <!-- 如何连接到目标数据库 The <jdbcConnection> element is used to specify the properties of the database connection required to introspect tables. -->
+        <jdbcConnection driverClass="com.mysql.cj.jdbc.Driver"
+                        connectionURL="jdbc:mysql://localhost:3306/testdb?allowMultiQueries=true"
+                        userId="root"
+                        password="root">
+        </jdbcConnection>
+
+        <!--
+            The <javaTypeResolver> element is used to define properties of the Java Type Resolver. The Java Type Resolver is used to calculate Java types from database column information.
+            The default Java Type Resolver attempts to make JDBC DECIMAL and NUMERIC types easier to use by substituting Integral types if possible (Long, Integer, Short, etc.) If this behavior is undesirable, set the property "forceBigDecimals" to "true"
+         -->
+        <javaTypeResolver >
+            <!-- This property is used to specify whether MyBatis Generator should force the use of java.math.BigDecimal for DECIMAL and NUMERIC fields, rather than substituting integral types when possible.-->
+            <!-- 默认为 false, 表示可以将 JDBC DECIMAL and NUMERIC types 在合适的情况下转换为 (Long, Integer, Short, etc.) -->
+            <property name="forceBigDecimals" value="false" />
+        </javaTypeResolver>
+
+        <!--
+            The <javaModelGenerator> element is used to define properties of the Java model generator. The Java Model Generator builds primary key classes, record classes, and Query by Example classes that match the introspected table.
+            This element is a required child element of the <context> element.
+            即生成 JavaBean, 用来指定 JavaBean 的生成策略
+
+            targetPackage：目标包名，targetProject：目标工程。 ".\src" 表示为当前工程的 src 包下
+        -->
+        <javaModelGenerator targetPackage="test.model" targetProject="\MBGTestProject\src">
+            <property name="enableSubPackages" value="true" />
+            <property name="trimStrings" value="true" />
+        </javaModelGenerator>
+
+        <!-- sql 映射生成策略 -->
+        <sqlMapGenerator targetPackage="test.xml"  targetProject="\MBGTestProject\src">
+            <property name="enableSubPackages" value="true" />
+        </sqlMapGenerator>
+
+        <!-- 指定 mapper 接口所在的位置 -->
+        <javaClientGenerator type="XMLMAPPER" targetPackage="test.dao"  targetProject="\MBGTestProject\src">
+            <property name="enableSubPackages" value="true" />
+        </javaClientGenerator>
+
+        <!-- 指定需要逆向分析哪些表, 根据这些表来创建 JavaBean, domainObjectName 用来指定生成的类名 -->
+        <table tableName="" domainObjectName="">
+
+        </table>
+
+    </context>
+</generatorConfiguration>

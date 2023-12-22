@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <!-- properties 标签用来引入外部的 properties 配置文件, resource 属性表示 properties 文件在类路径下, url 属性表示 properties 文件在网络路径或磁盘路径下 -->
+    <properties resource="jdbc.properties"></properties>
+
+    <!-- settings 包含很多重要的设置项, setting 用来设置一个设置项, 其属性 name 表示设置项名称, value 表示设置项取值 -->
+    <settings>
+        <setting name="cacheEnabled" value="true"/>
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <!-- 延迟加载的全局开关. 当开启时, 所有关联对象都会延迟加载.  -->
+        <setting name="lazyLoadingEnabled" value="true"/>
+        <!-- 开启时, 对象中任一方法的调用 都会加载该对象的所有延迟加载属性. 关闭后, 每个延迟加载属性会按需加载. -->
+        <setting name="aggressiveLazyLoading" value="false"/>
+    </settings>
+
+    <!-- typeAliases 别名处理器：可以为 JavaBean 类型起别名 -->
+    <typeAliases>
+        <!-- typeAlias：为某个 java 类型起别名; type：指定要起别名的类型全类名; 如果没有配置 alias 属性来指定别名, 则其默认别名就是类名小写; 这里默认别名就是 employee -->
+        <!-- <typeAlias type="com.mybatis.bean.Employee" alias="emp" /> -->
+
+        <!-- package 为某个包下的所有类批量起别名; name 指定包名（为 当前包 以及 下面所有的子包 的每一个类都起一个默认别名（类名小写）） -->
+        <package name="com.mybatis.bean"/>
+    </typeAliases>
+
+    <!-- 配置类型处理器 TypeHandler -->
+    <typeHandlers>
+        <typeHandler handler="org.apache.ibatis.type.EnumOrdinalTypeHandler" javaType="com.mybatis.bean.EmployeeStatus"></typeHandler>
+        <typeHandler handler="com.mybatis.typehandler.MyEnumTypeHandler" javaType="com.mybatis.bean.EmployeeStatusPlus"></typeHandler>
+    </typeHandlers>
+
+    <!-- 自定义插件注册 -->
+    <plugins>
+        <!--        <plugin interceptor="com.mybatis.interceptors.MyFirstInterceptor">-->
+        <!--            &lt;!&ndash; 注册插件时, 传递的 key-value 可以利用插件的 setProperties 方法, setProperties 方法将这些 key-value 包装成了 Properties 对象 &ndash;&gt;-->
+        <!--            &lt;!&ndash; 我们可以在程序运行期间, 使用这个 Properties 对象中的内容 &ndash;&gt;-->
+        <!--            <property name="username" value="root"/>-->
+        <!--            <property name="password" value="123456"/>-->
+        <!--        </plugin>-->
+        <!--        <plugin interceptor="com.mybatis.interceptors.MySecondInterceptor"></plugin>-->
+        <!--        <plugin interceptor="com.mybatis.interceptors.DynamicChangeSqlArgs"></plugin>-->
+        <plugin interceptor="com.github.pagehelper.PageInterceptor"></plugin>
+    </plugins>
+
+    <!-- environments：可以配置多个环境 environment, default 属性用来指定当前使用的环境. 通过 default 属性指定当前使用的环境 id 可以达到快速切换环境的效果 -->
+    <environments default="development">
+        <!-- <environment id="test"> -->
+        <!-- transactionManager 事务管理器, type 就是事务管理器的类型 -->
+        <!-- <transactionManager type=""></transactionManager> -->
+        <!-- 配置数据源, type 为数据源类型, type 在 Mybatis 中内置的类型由 POOLED、UNPOOLED、JNDI, 也可以通过实现 DataSourceFactory 接口自定义数据源, 自定义数据源的目的一般就是更换连接池 -->
+        <!-- <dataSource type=""></dataSource> -->
+        <!-- </environment> -->
+        <!-- environment 用来配置一个具体的环境信息, 其 id 属性代表当前环境的唯一标识, 需要两个标签 <transactionManager>、<dataSource> -->
+        <environment id="development">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+                <property name="driver" value="${jdbc.Driver}"/>
+                <property name="url" value="${jdbc.url}"/>
+                <property name="username" value="${jdbc.username}"/>
+                <property name="password" value="${jdbc.password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <!-- 放在 <environments> 标签之前会报错 -->
+    <databaseIdProvider type="DB_VENDOR">
+        <!-- 为不同的数据库厂商起别名 -->
+        <property name="MySQL" value="mysql"/>
+        <property name="Oracle" value="oracle"/>
+        <property name="SQL Server" value="sqlserver"/>
+    </databaseIdProvider>
+
+    <!-- 将我们写好的 sql 映射文件（mapper/TestMapper.xml）一定要注册到全局配置文件（mybatis-config.xml）中 -->
+    <mappers>
+        <!-- <mapper resource="mapper/TestMapper.xml"/> -->
+        <!-- <mapper resource="mapper/EmployeeMapper.xml"/> -->
+
+        <!-- 使用 class 属性配置 基于注解方式实现的 Mybatis 接口文件 -->
+        <!-- <mapper class="com.mybatis.mapper.EmployeeMapperAnnotation"/> -->
+
+        <!-- 批量注册, 此时 resources 文件夹下 存放 sql 映射文件 xml 的目录结构与 存放 xml 动态绑定的 interface 接口文件 的包名一致, 编译后会将两者放到一个地方 -->
+        <!-- 注解方式的配置, 能够正常扫描 -->
+        <package name="com.mybatis.mapper"/>
+    </mappers>
+</configuration>

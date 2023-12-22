@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mybatis.mapper.OGNLMapper">
+    <cache-ref namespace="com.mybatis.mapper.SecondCacheMapper"/>
+    <select id="getEmployeeById" resultType="com.mybatis.bean.Employee">
+        select * from employee
+        <!-- if 标签的 test 里的 id 表示的是传入的参数, 即和外面的 #{id} 一样的作用-->
+        <where>
+            <if test="id != null">
+                id = #{id}
+            </if>
+            <!-- '' 代表 空串 -->
+            <if test="lastName != null and lastName != ''">
+                and last_name like #{lastName}
+            </if>
+            <!-- email 是 String 类型, 可以调用其方法 trim() 取出两边多余空格 -->
+            <if test="email != null and email.trim() != ''">
+                and email = #{email}
+            </if>
+            <if test="gender == 0 or gender == 1">
+                and gender = #{gender}
+            </if>
+        </where>
+    </select>
+
+    <select id="getEmployeeByObject" resultType="com.mybatis.bean.Employee">
+        select * from employee
+        <!-- 给拼接的 sql 语句前缀添加 where, 然后去掉最后多余的 and -->
+        <trim prefix="where" suffixOverrides="and">
+            <if test="id != null">
+                id = #{id} and
+            </if>
+            <if test="lastName != null and lastName != ''">
+                last_name like #{lastName} and
+            </if>
+            <if test="email != null and email.trim() != ''">
+                email = #{email} and
+            </if>
+            <if test="gender == 0 or gender == 1">
+                gender = #{gender}
+            </if>
+        </trim>
+    </select>
+
+    <!-- Mybatis 中的 "带有 break 的 switch-case", 即只能进入一个查询条件-->
+    <select id="getEmployeeByConditionChoose" resultType="com.mybatis.bean.Employee">
+        select * from employee
+        <!-- 经常使用 <where> 标签, 很少直接写 where -->
+        <where>
+            <!-- 类似于 Java 中的 switch-case -->
+            <choose>
+                <!-- 进入 "case" 判断, 且该 "case" 结尾带有 break; -->
+                <when test="id != null">
+                    id = #{id}
+                </when>
+                <when test="lastName != null">
+                    last_name like #{lastName}
+                </when>
+                <when test="email != null">
+                    email = #{email}
+                </when>
+                <when test="gender == 0 or gender == 1">
+                    gender = #{gender}
+                </when>
+                <!-- 类似于 default, 即没有匹配到上方的所有条件 -->
+                <otherwise>
+                    <!-- 查询所有 -->
+                    1=1
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+
+    <update id="partlyUpdateEmployeeMesByObject">
+        update employee
+        <set>
+            <if test="lastName != null">
+                last_name = #{lastName},
+            </if>
+            <if test="gender == 0 or gender == 1">
+                gender = #{gender},
+            </if>
+            <if test="email != null">
+                email = #{email}
+            </if>
+        </set>
+        <where>
+            id = #{id}
+        </where>
+    </update>
+
+    <update id="partlyUpdateEmployeeMesByObjectTrim">
+        update employee
+        <!-- <trim> 标签中包含的就是 整个拼接字符串, 使用 prefix 属性给整个拼接字符前面添加 set, 使用 suffixOverrides 去除整个拼接字符串结尾的多余的 "," -->
+        <trim prefix="set" suffixOverrides=",">
+            <if test="lastName != null">
+                last_name = #{lastName},
+            </if>
+            <if test="email != null">
+                email = #{email},
+            </if>
+            <if test="gender == 0 or gender == 1">
+                gender = #{gender}
+            </if>
+        </trim>
+        where id = #{id}
+    </update>
+</mapper>

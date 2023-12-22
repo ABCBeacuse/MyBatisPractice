@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mybatis.mapper.SecondCacheMapper">
+    <cache eviction="FIFO" flushInterval="60000" readOnly="false" size="1024"/>
+
+    <!--
+        属性解析：
+        1. eviction：缓存的回收策略：
+            LRU - 最近最少使用的：移除最长时间不被使用的对象。
+            FIFO - 先进先出：按对象进入缓存的顺序来移除它们。
+            SOFT - 软引用：移除基于垃圾回收器状态和软引用规则的对象。
+            WEAK - 弱引用：更积极地移除基于垃圾收集器状态和弱引用规则的对象。
+            默认是 LRU
+        2. flushInterval：缓存刷新的时间间隔（毫秒值）1s = 1000ms
+            即缓存多长时间清空一次，默认是不清空
+        3. readOnly：是否只读
+            true：只读；Mybatis 认为 所有从缓存中获取数据 的操作都是 只读操作 ，不会修改数据。
+                       所以 Mybatis 为了加快获取速度，直接就会将 数据在缓存中的引用 返回给用户。不安全，但是速度快。
+            false：非只读；Mybatis 觉得 获取的数据可能会被修改。所以不会直接返回 数据在缓存中的引用。
+                        而是会通过 序列化和反序列化 的技术克隆一份新的数据来返回。安全，但是速度慢。
+            默认为 false 非只读
+        4. size：缓存可以放多少元素
+        5. type：指定自定义缓存的全类名，但是一般都使用默认的。如果需要自定义缓存的名称, 可以定义一个类, 实现 Cache 接口, 将这个类的全类名
+                 作为这个属性的值即可。
+    -->
+
+    <select id="getEmployeeById" resultType="com.mybatis.bean.Employee" useCache="true">
+        select * from employee where id = #{id}
+    </select>
+
+    <insert id="addEmployees">
+        insert into employee(last_name, gender, email) values
+        <foreach collection="list" item="emp" separator=",">
+            (#{emp.lastName}, #{emp.gender}, #{emp.email})
+        </foreach>
+    </insert>
+</mapper>

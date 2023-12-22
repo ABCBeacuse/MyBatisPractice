@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mybatis.mapper.EmployeeWithStatusMapper">
+    <insert id="AddEmployeeWithStatus">
+        insert into employee_status (name, age, status) values (#{name}, #{age}, #{employeeStatus})
+    </insert>
+
+    <insert id="AddEmployeeWithStatusPlus">
+        insert into employee_status (name, age, status) values (#{name}, #{age},
+        #{employeeStatus, typeHandler=com.mybatis.typehandler.MyEnumTypeHandler})
+    </insert>
+
+    <!-- 除了在 Mybatis 配置文件中配置 类型处理器之外，也可以在 sql 映射文件 xml 中进行配置，指定处理某个字段时使用哪个类型处理器进行处理 -->
+    <resultMap id="myEmp" type="com.mybatis.bean.EmployeeWithStatusPlus">
+        <result column="name" property="name"/>
+        <result column="age" property="age"/>
+        <result column="status" property="employeeStatus" typeHandler="com.mybatis.typehandler.MyEnumTypeHandler"/>
+    </resultMap>
+
+    <select id="getEmployeeById" resultMap="myEmp">
+        select * from employee_status where id = #{id}
+    </select>
+</mapper>
